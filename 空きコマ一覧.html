@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -52,10 +51,8 @@ body {
 </div>
 
 <div style="margin:12px 0;">
-  <label>個人で絞り込み：</label>
-  <select id="personSelect">
-    <option value="">-- 全員表示 --</option>
-  </select>
+  <label>個人で絞り込み（チェックボックス）：</label>
+  <div id="personCheckboxes" style="max-height:180px; overflow:auto; border:1px solid #ccc; padding:6px;"></div>
 </div>
 
 <div id="grid" class="grid"></div>
@@ -66,25 +63,33 @@ const nameToDept = {"五十殿陽人": "設営部", "今村謡汰": "出展部",
 const days = ["㈪","㈫","㈬","㈭","㈮"];
 const periods = ["全休","１限","２限","３限","４限","５限"];
 
-// Populate person dropdown
+// Populate person checkboxes
 const allNames = Array.from(new Set(Object.values(table).flatMap(p => 
     Object.values(p).flat()
 ))).sort();
 
-const select = document.getElementById("personSelect");
-allNames.forEach(n => {
-    const opt = document.createElement("option");
-    opt.value = n;
-    opt.textContent = n;
-    select.appendChild(opt);
-});
+const boxContainer = document.getElementById("personCheckboxes");
 
-select.addEventListener("change", render);
+allNames.forEach(n => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = n;
+    cb.addEventListener("change", render);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(" " + n));
+    boxContainer.appendChild(label);
+});
 
 
 function render() {
     const selected = Array.from(document.querySelectorAll("input[type=checkbox]:checked")).map(cb => cb.value);
-    const personFilter = document.getElementById("personSelect").value;
+    
+const personFilters = Array.from(
+    document.querySelectorAll("#personCheckboxes input:checked")
+).map(cb => cb.value);
+
     const grid = document.getElementById("grid");
     grid.innerHTML = "";
 
@@ -101,7 +106,7 @@ function render() {
             cell.className = "slot";
             table[p][d].forEach(name => {
                 const dept = nameToDept[name] || "幹部";
-                if (selected.includes(dept) && (!personFilter || personFilter === name)) {
+                if (selected.includes(dept) && (personFilters.length === 0 || personFilters.includes(name))) {
                     const span = document.createElement("span");
                     span.className = "name " + dept;
                     span.textContent = name;
